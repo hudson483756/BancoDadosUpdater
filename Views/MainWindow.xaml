@@ -1,0 +1,122 @@
+﻿<Window x:Class="BancoDadosUpdater.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewmodels="clr-namespace:BancoDadosUpdater.ViewModels"
+        mc:Ignorable="d"
+        Title="BancoDadosUpdater - Sincronizador de Banco de Dados" 
+        Height="650" Width="900" 
+        WindowStartupLocation="CenterScreen">
+
+    <Window.DataContext>
+        <viewmodels:MainViewModel />
+    </Window.DataContext>
+
+    <!-- Grid Principal da Tela -->
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Seção 1: Seleção de Bancos (Grid interna de 2 colunas) -->
+        <Grid Grid.Row="0" Margin="0,0,0,15">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="15"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Banco 1: Drive (Dados) -->
+            <GroupBox Header="1. Banco do Drive (Dados do Cliente)" Grid.Column="0" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="Selecione o arquivo memorias.db que contém os cadastros:" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding DbDrive.FilePath, Mode=OneWay}" IsReadOnly="True" VerticalAlignment="Center" Padding="4"/>
+                        <Button Content="Buscar..." Command="{Binding SelecionarDbDriveCommand}" Grid.Column="1" Margin="5,0,0,0" Padding="10,4"/>
+                        <Button Content="Visualizar" Click="BtnVisualizarDrive_Click" Grid.Column="2" Margin="5,0,0,0" Padding="10,4"/>
+                    </Grid>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Tabelas Detectadas: " FontWeight="Bold"/>
+                        <TextBlock Text="{Binding DbDrive.Tables.Count, FallbackValue=0}" Foreground="Green" FontWeight="Bold"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Banco 2: Windows (Modelo) -->
+            <GroupBox Header="2. Banco do Windows (Estrutura Modelo)" Grid.Column="2" Padding="10">
+                <StackPanel>
+                    <TextBlock Text="Selecione o arquivo memorias.db do Windows atualizado:" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding DbWindows.FilePath, Mode=OneWay}" IsReadOnly="True" VerticalAlignment="Center" Padding="4"/>
+                        <Button Content="Buscar..." Command="{Binding SelecionarDbWindowsCommand}" Grid.Column="1" Margin="5,0,0,0" Padding="10,4"/>
+                        <Button Content="Visualizar" Click="BtnVisualizarWindows_Click" Grid.Column="2" Margin="5,0,0,0" Padding="10,4"/>
+                    </Grid>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Tabelas Detectadas: " FontWeight="Bold"/>
+                        <TextBlock Text="{Binding DbWindows.Tables.Count, FallbackValue=0}" Foreground="Green" FontWeight="Bold"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+        </Grid>
+
+        <!-- Seção 2: Botão Ação Migrar -->
+        <Button Grid.Row="1" Content="⚡ Gerar Banco Corrigido em Documents" 
+                Command="{Binding ProcessarEAtualizarCommand}" 
+                Height="40" FontSize="14" FontWeight="Bold" Margin="0,0,0,15"/>
+
+        <!-- Seção 3: Inspeção de Estrutura do Resultado -->
+        <GroupBox Header="3. Estrutura do Banco Resultante (BancoCorrigido)" Grid.Row="2" Padding="10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="250"/>
+                    <ColumnDefinition Width="10"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Lista de Tabelas -->
+                <DockPanel Grid.Column="0">
+                    <TextBlock Text="Tabelas no Banco Corrigido:" DockPanel.Dock="Top" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <ListBox x:Name="LstTabelasCorrigidas" ItemsSource="{Binding DbCorrigido.Tables}" DisplayMemberPath="TableName"/>
+                </DockPanel>
+
+                <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
+
+                <!-- Detalhes das Colunas da Tabela Selecionada -->
+                <DockPanel Grid.Column="2">
+                    <TextBlock Text="Colunas da Tabela Selecionada:" DockPanel.Dock="Top" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <DataGrid ItemsSource="{Binding ElementName=LstTabelasCorrigidas, Path=SelectedItem.Columns}" 
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserAddRows="False" CanUserDeleteRows="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Nome da Coluna" Binding="{Binding Name}" Width="*"/>
+                            <DataGridTextColumn Header="Tipo" Binding="{Binding Type}" Width="100"/>
+                            <DataGridCheckBoxColumn Header="Não Nulo" Binding="{Binding IsNotNull}" Width="80"/>
+                            <DataGridTextColumn Header="Valor Padrão" Binding="{Binding DefaultValue}" Width="120"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Grid>
+        </GroupBox>
+
+        <!-- Barra de Status -->
+        <StatusBar Grid.Row="3" Margin="0,10,0,0">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusMessage}"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>
